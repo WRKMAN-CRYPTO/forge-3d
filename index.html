@@ -7,7 +7,7 @@
 <label>Generator</label><select id="style"><option value="humanoid">Humanoid</option><option value="quadruped">Quadruped</option><option value="crawler">Crawler</option><option value="abstract">Abstract</option></select>
 <div id="creatureOptions"><label>Leg pairs (crawler)</label><input id="legpairs" type="range" min="2" max="8" step="1" value="4"><span id="legcount">4 pairs</span><label>Body length</label><input id="bodylength" type="range" min="0.7" max="1.7" step=".1" value="1"><label>Leg length</label><input id="leglength" type="range" min=".65" max="1.6" step=".05" value="1"></div><div class="buttons"><button id="generate">Generate</button><button id="mutate">Mutate proportions</button><button id="clear">Clear</button></div>
 <label>Workshop mode</label><div class="buttons"><button id="anatomy" class="active">Anatomy / Pose</button><button id="sculpt">Geometry / Sculpt</button></div>
-<label><input type="checkbox" id="overlay" checked> Show skeleton</label><h3>Collision laboratory</h3><label><input type="checkbox" id="collisions"> Detect self-overlap</label><label><input type="checkbox" id="bounds"> Show collision volumes</label><div id="collisionstatus" style="color:#b5c4d9;margin:8px 0">Collision preview off</div><small>Broad-phase box overlap only. Highlights possible collisions; no forces or physical response yet.</small>
+<label><input type="checkbox" id="overlay" checked> Show skeleton</label><h3>Collision laboratory</h3><label><input type="checkbox" id="collisions"> Detect self-overlap</label><label><input type="checkbox" id="bounds"> Show collision volumes</label><div id="collisionstatus" style="color:#b5c4d9;margin:8px 0">Collision preview off</div><small>Selected part: bright green box and local XYZ axes (X red, Y green, Z blue).</small><small>Broad-phase box overlap only. Highlights possible collisions; no forces or physical response yet.</small>
 <h3>Structure</h3><select id="nodes" size="7"></select>
 <div class="buttons"><button id="addjoint">+ Joint</button><button id="addshape">+ Shape</button><button id="duplicate">Duplicate</button><button id="delete">Delete</button></div>
 <label>Selected item</label><input id="name" placeholder="Name">
@@ -26,7 +26,7 @@ const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(
 const orbit=new OrbitControls(camera,renderer.domElement);orbit.enableDamping=true;orbit.target.set(0,1.5,0);
 scene.add(new THREE.HemisphereLight(0xffffff,0x53627e,2));const lamp=new THREE.DirectionalLight(0xffffff,2);lamp.position.set(5,9,6);scene.add(lamp);
 scene.add(new THREE.GridHelper(24,24,0x43536b,0x27364b));
-let nodes=[],chosen=null,mode='anatomy',counter=0;const objects=[],jointVisuals=[],collisionHelpers=[],group=new THREE.Group();scene.add(group);
+let nodes=[],chosen=null,mode='anatomy',counter=0;const objects=[],jointVisuals=[],collisionHelpers=[],selectionHelpers=[],group=new THREE.Group();scene.add(group);
 const palette=['#f18b9b','#75aaff','#8ed5b2','#e8b96d','#b5a0e9'];
 const id=()=>++counter,random=(a,b)=>a+Math.random()*(b-a);
 function joint(name,parent,pos){const n={id:id(),type:'joint',name,parent,pos,rot:[0,0,0]};nodes.push(n);return n.id}
@@ -107,13 +107,13 @@ function proceduralMesh(n){
  }
  g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nn,3));g.setIndex(idx);g.computeBoundingSphere();return g;
 }
-function rebuild(){clearCollisionHelpers();group.traverse(o=>{if(o.isMesh&&o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});while(group.children.length)group.remove(group.children[0]);objects.length=0;jointVisuals.length=0;collisionHelpers.length=0;
+function rebuild(){clearSelectionHelpers();clearCollisionHelpers();group.traverse(o=>{if(o.isMesh&&o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()});while(group.children.length)group.remove(group.children[0]);objects.length=0;jointVisuals.length=0;collisionHelpers.length=0;
 const groups=new Map();for(const n of nodes.filter(n=>n.type==='joint'))groups.set(n.id,new THREE.Group());
 for(const n of nodes.filter(n=>n.type==='joint')){const g=groups.get(n.id);g.position.set(...n.pos);g.rotation.set(...n.rot.map(x=>x*Math.PI/180));(groups.get(n.parent)||group).add(g);
 const ball=new THREE.Mesh(new THREE.SphereGeometry(.095,10,8),new THREE.MeshBasicMaterial({color:n.id===chosen?0xffe477:0x57d4ff,depthTest:false}));ball.renderOrder=5;g.add(ball);ball.userData.id=n.id;jointVisuals.push(ball);
 if(n.parent&&groups.has(n.parent)){const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(...n.pos)]),new THREE.LineBasicMaterial({color:0x57d4ff,depthTest:false}));line.renderOrder=4;groups.get(n.parent).add(line);jointVisuals.push(line)}}
 for(const n of nodes.filter(n=>n.type==='shape')){const geometry=n.shape==='box'?new THREE.BoxGeometry(1,1,1):n.shape==='sphere'?new THREE.SphereGeometry(.5,20,14):n.shape==='parametric'?proceduralMesh(n):new THREE.CylinderGeometry(.5,.5,1,20);const m=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({color:n.color,roughness:.7,emissive:n.id===chosen?0x252525:0}));m.position.set(...n.pos);m.rotation.set(...n.rot.map(x=>x*Math.PI/180));m.scale.set(...n.scale);m.userData.id=n.id;(groups.get(n.parent)||group).add(m);objects.push(m)}
-jointVisuals.forEach(o=>o.visible=$('overlay').checked);checkCollisions();refreshUI()}
+jointVisuals.forEach(o=>o.visible=$('overlay').checked);checkCollisions();showSelection();refreshUI()}
 function checkCollisions(){
  group.updateMatrixWorld(true);
  const boxes=objects.map(m=>new THREE.Box3().setFromObject(m));
@@ -132,6 +132,18 @@ function checkCollisions(){
  $('collisionstatus').textContent=enabled?(pairs.length+' possible overlap'+(pairs.length===1?'':'s')+(pairs.length?' · red = potential contact':'')):'Collision preview off';
 }
 function clearCollisionHelpers(){for(const h of collisionHelpers){scene.remove(h);h.geometry.dispose();h.material.dispose()}collisionHelpers.length=0}
+function clearSelectionHelpers(){for(const o of selectionHelpers){scene.remove(o);o.traverse?.(x=>{if(x.geometry)x.geometry.dispose();if(x.material)x.material.dispose()})}selectionHelpers.length=0}
+function showSelection(){
+ const selected=nodes.find(n=>n.id===chosen);if(!selected)return;
+ group.updateMatrixWorld(true);
+ const mesh=objects.find(o=>o.userData.id===chosen);
+ const jointMarker=jointVisuals.find(o=>o.isMesh&&o.userData.id===chosen);
+ const target=mesh||jointMarker;if(!target)return;
+ const box=new THREE.Box3().setFromObject(target);
+ if(selected.type==='joint'){const p=new THREE.Vector3();target.getWorldPosition(p);box.min.copy(p).addScalar(-.17);box.max.copy(p).addScalar(.17)}
+ const helper=new THREE.Box3Helper(box,0x39ff73);helper.material.depthTest=false;helper.renderOrder=15;scene.add(helper);selectionHelpers.push(helper);
+ const axes=new THREE.AxesHelper(Math.max(.45,box.getSize(new THREE.Vector3()).length()*.45));axes.material.depthTest=false;axes.renderOrder=16;const pos=new THREE.Vector3();target.getWorldPosition(pos);axes.position.copy(pos);const q=new THREE.Quaternion();target.getWorldQuaternion(q);axes.quaternion.copy(q);scene.add(axes);selectionHelpers.push(axes);
+}
 function refreshUI(){const n=nodes.find(n=>n.id===chosen);$('nodes').innerHTML=nodes.map(x=>'<option value="'+x.id+'">'+(x.type==='joint'?'◉ ':'▣ ')+x.name+'</option>').join('');$('nodes').value=chosen??'';$('name').value=n?.name||'';$('geometry').style.display=n?.type==='shape'?'block':'none';$('paramcontrols').style.display=n?.type==='shape'&&n.shape==='parametric'?'block':'none';$('parent').innerHTML='<option value="">World (no parent)</option>'+nodes.filter(x=>x.type==='joint'&&x.id!==chosen).map(x=>'<option value="'+x.id+'">'+x.name+'</option>').join('');$('parent').value=n?.parent??'';if(n?.type==='shape'){$('shape').value=n.shape;$('color').value=n.color;for(const k of ['taper','bulge','curve'])$(k).value=n[k]??0}for(const key of ['pos','rot','scale']){const box=$(key);box.innerHTML='';for(let i=0;i<3;i++){const input=document.createElement('input');input.type='number';input.step=key==='rot'?'5':'.1';input.value=n?.[key]?.[i]??0;input.disabled=!n;input.onchange=()=>{n[key][i]=Number(input.value);rebuild()};box.append(input)}}}
 function pick(v){chosen=v;rebuild()}
 $('nodes').onchange=e=>pick(Number(e.target.value));
