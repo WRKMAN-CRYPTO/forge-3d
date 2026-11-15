@@ -1,10 +1,10 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Character Forge 019</title>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Character Forge 020</title>
 <style>*{box-sizing:border-box}body{margin:0;background:#11141d;color:#e9eef9;font:14px system-ui}header{padding:12px;background:#222a3b;display:flex;justify-content:space-between}main{display:grid;grid-template-columns:minmax(0,1fr) 330px;height:calc(100dvh - 47px)}#view{position:relative;min-width:0;overflow:hidden}#view canvas{position:absolute;inset:0;width:100%!important;height:100%!important;touch-action:none}aside{min-width:0;overflow:auto;padding:14px;background:#1d2433}button,input,select{background:#313e55;color:white;border:1px solid #526580;border-radius:7px;padding:8px;font:inherit;max-width:100%}button{cursor:pointer}button.active{background:#496a99}label{display:block;color:#b5c4d9;margin:10px 0 5px}h3{margin:16px 0 7px}.buttons{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.three input{width:100%;min-width:0}#nodes{width:100%}#hint{position:absolute;bottom:12px;left:12px;right:12px;width:max-content;max-width:calc(100% - 24px);background:#101622dd;padding:9px;border-radius:8px;pointer-events:none}#error{display:none;position:absolute;z-index:5;top:10px;left:10px;right:10px;background:#792c3c;padding:12px;border-radius:8px;white-space:pre-wrap}@media(max-width:700px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:52dvh auto;height:auto}aside{overflow:visible}}#view{height:100%;min-height:0}main{display:block;height:calc(100dvh - 47px);position:relative}aside{position:fixed;z-index:20;right:12px;top:60px;bottom:12px;width:min(360px,calc(100vw - 24px));max-height:calc(100dvh - 72px);overflow-y:auto;border:1px solid #536784;border-radius:14px;box-shadow:0 12px 45px #0009;display:none}aside.open{display:block}#panelbar{position:absolute;top:12px;left:12px;z-index:10;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 24px)}#panelbar button{background:#263950e8;box-shadow:0 3px 12px #0007}#panelclose{position:sticky;top:-14px;z-index:30;display:flex;align-items:center;justify-content:space-between;background:#1d2433;padding:10px 0;border-bottom:1px solid #43516b}#panelclose button{font-size:18px}#hint{font-size:12px;max-width:calc(100% - 24px)}@media(max-width:700px){main{display:block;height:calc(100dvh - 47px)}aside{left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:min(68dvh,680px);border-radius:16px}#panelbar button{font-size:12px;padding:7px 9px}} #panelbar button,#closepanel{min-height:44px;min-width:44px}#panelbar{right:12px}#workshop{overscroll-behavior:contain}#view,#panelbar,button{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}#view canvas{touch-action:none}input,select{user-select:auto;-webkit-user-select:auto}#saveindicator{font-size:11px;color:#a8e1ba;margin-left:8px}#panelbar{pointer-events:none}#panelbar button{pointer-events:auto} html,body{width:100%;height:100%;overflow:hidden;overscroll-behavior:none}header{height:47px;align-items:center;gap:8px;white-space:nowrap;overflow:hidden}header>*{min-width:0}header span{overflow:hidden;text-overflow:ellipsis}#panelbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;max-width:none;width:calc(100% - 24px);right:12px;left:12px}#panelbar button{padding:7px 2px;min-width:0;width:100%;font-size:clamp(10px,2.7vw,13px);line-height:1.1;min-height:44px;white-space:nowrap}#view{width:100%;touch-action:none}#workshop{touch-action:pan-y}#hint{font-size:clamp(10px,2.8vw,12px)}@media(max-width:390px){#panelbar button{font-size:10px;letter-spacing:-.3px}} </style>
 <script>addEventListener('error',e=>{let x=document.getElementById('error');if(x){x.style.display='block';x.textContent='Error: '+e.message}});addEventListener('unhandledrejection',e=>{let x=document.getElementById('error');if(x){x.style.display='block';x.textContent=String(e.reason)}})</script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script></head>
-<body><header><b>◈ Character Forge <span style="color:#9fb8d9">019</span></b><span>Procedural Anatomy</span></header>
+<body><header><b>◈ Character Forge <span style="color:#9fb8d9">020</span></b><span>Procedural Anatomy</span></header>
 <main><div id="view"><div id="panelbar"><button data-panel="generator">⚙ Generate</button><button data-panel="structure">🦴 Anatomy</button><button data-panel="editing">✏️ Edit</button><button data-panel="files">💾 Files</button><button id="undo" title="Undo last edit">↶ Undo</button></div><div id="error"></div><div id="hint">Drag to orbit · Pinch to zoom · Tap a shape to select</div></div><aside id="workshop"><div id="panelclose"><b id="paneltitle">Workshop</b><span id="saveindicator">Local autosave</span><button id="closepanel" aria-label="Close editor">✕</button></div>
-<div data-section="generator"><label>Generator</label><select id="style"><option value="humanoid">Humanoid</option><option value="quadruped">Quadruped</option><option value="crawler">Crawler</option><option value="abstract">Abstract</option></select>
+<div data-section="generator"><p><a href="./director.html" style="color:#9ee6ff">🎬 Open Director</a></p><div class="buttons"><button id="directorApply">🎬 Apply Director design</button></div><div id="directorStatus" style="color:#a8c8dc;font-size:12px">Director proposals can be applied here or sent directly from the Director.</div><label>Generator</label><select id="style"><option value="humanoid">Humanoid</option><option value="quadruped">Quadruped</option><option value="crawler">Crawler</option><option value="abstract">Abstract</option></select>
 <div id="creatureOptions"><label>Leg pairs (crawler)</label><input id="legpairs" type="range" min="2" max="8" step="1" value="4"><span id="legcount">4 pairs</span><label>Crawler body segments</label><input id="segments" type="range" min="1" max="10" step="1" value="3"><span id="segmentcount">3 segments</span><label><input type="checkbox" id="negotiate" checked> Anatomical negotiation (avoid leg crowding)</label><label>Leg pairs per segment (crawler)</label><input id="pairspersegment" type="range" min="0" max="3" step="1" value="1"><span id="pairsegmentcount">1 pair per segment</span><label>Body length</label><input id="bodylength" type="range" min="0.7" max="1.7" step=".1" value="1"><label>Leg length</label><input id="leglength" type="range" min=".65" max="1.6" step=".05" value="1"></div><div class="buttons"><button id="generate">Generate</button><button id="mutate">Mutate proportions</button><button id="clear">Clear</button></div>
 </div><div data-section="structure"><label>Workshop mode</label><div class="buttons"><button id="anatomy" class="active">Anatomy / Pose</button><button id="sculpt">Geometry / Sculpt</button></div>
 <label><input type="checkbox" id="overlay" checked> Show skeleton</label><h3>Collision laboratory</h3><label><input type="checkbox" id="collisions"> Detect self-overlap</label><label><input type="checkbox" id="bounds"> Show collision volumes</label><div id="collisionstatus" style="color:#b5c4d9;margin:8px 0">Collision preview off</div><small>Selected part: bright green box and local XYZ axes (X red, Y green, Z blue).</small><small>Broad-phase box overlap only. Highlights possible collisions; no forces or physical response yet.</small>
@@ -246,6 +246,59 @@ else if(style==='crawler'){
 }
 else{const center=joint('Core',root,[0,1.7,0]);for(let i=0;i<12;i++){const j=joint('Branch '+i,center,[random(-1.5,1.5),random(-1.2,1.2),random(-1.5,1.5)]);shape('Form '+i,j,['box','sphere','cylinder'][i%3],[random(.3,1.3),random(.3,1.3),random(.3,1.3)])}}
 nodes.filter(n=>n.shape==='parametric').forEach(n=>{n.taper=(n.taper||0)+random(-.09,.09);n.bulge=(n.bulge||0)+random(-.07,.07);n.curve=0});chosen=nodes.find(n=>n.type==='shape')?.id??root;rebuild()}
+
+const DIRECTOR_KEY='character-forge-director-001',DIRECTOR_BRIDGE='character-forge-director-bridge-v1';
+function directorBody(){
+ try{const bridge=JSON.parse(localStorage.getItem(DIRECTOR_BRIDGE)||'null');
+ const session=JSON.parse(localStorage.getItem(DIRECTOR_KEY)||'null');
+ const candidate=bridge?.body||session?.body;
+ const keys=['shoulders','torso','waist','arms','legs','head','bulk'];
+ if(!candidate||!keys.every(k=>Number.isFinite(candidate[k])&&candidate[k]>=.3&&candidate[k]<=3))return null;
+ return {body:candidate,revision:bridge?.revision||0};
+ }catch{return null}
+}
+function applyDirector(){
+ const proposal=directorBody();
+ if(!proposal){$('directorStatus').textContent='No Director proposal yet. Open Director and create one.';openPanel('generator');return}
+ checkpoint();$('style').value='humanoid';generate();
+ const b=proposal.body,byName=new Map(nodes.map(n=>[n.name,n]));
+ const at=name=>byName.get(name);
+ const scalePos=(n,f)=>{if(n)n.pos=n.pos.map((v,i)=>v*(Array.isArray(f)?f[i]:f))};
+ const scaleMesh=(n,f)=>{if(n?.type==='shape')n.scale=n.scale.map((v,i)=>Math.max(.08,v*(Array.isArray(f)?f[i]:f)))};
+ // Rebuild a neutral humanoid first. Apply parameters symmetrically in local joint space.
+ scalePos(at('Pelvis'),[1,b.legs,1]);
+ for(const side of ['Left','Right']){
+  for(const name of [' hip socket',' knee',' ankle',' foot pivot'])scalePos(at(side+name),[b.waist,b.legs,1]);
+  for(const name of [' thigh',' shin'])scaleMesh(at(side+name),[b.bulk,b.legs,b.bulk]);
+  scaleMesh(at(side+' hip cap'),[b.waist,b.bulk,b.bulk]);
+  scalePos(at(side+' shoulder'),[b.shoulders,1,1]);
+  scalePos(at(side+' elbow'),[b.shoulders,b.arms,1]);
+  scalePos(at(side+' wrist'),[1,b.arms,1]);
+  scalePos(at(side+' palm'),[1,b.arms,1]);
+  for(const name of [' upper arm',' forearm'])scaleMesh(at(side+name),[b.bulk,b.arms,b.bulk]);
+  scaleMesh(at(side+' shoulder cap'),b.bulk);
+  scaleMesh(at(side+' hand'),b.bulk);
+  scaleMesh(at(side+' foot'),[b.bulk,1,b.bulk]);
+ }
+ scalePos(at('Lumbar spine'),[1,b.torso,1]);
+ scalePos(at('Thoracic spine / chest'),[1,b.torso,1]);
+ scalePos(at('Shoulder girdle'),[1,b.torso,1]);
+ scaleMesh(at('Abdomen'),[b.waist*b.bulk,b.torso,b.bulk]);
+ scaleMesh(at('Rib cage'),[b.shoulders*b.bulk,b.torso,b.bulk]);
+ scaleMesh(at('Pelvic girdle'),[b.waist,b.bulk,b.bulk]);
+ scaleMesh(at('Clavicle bridge'),[b.shoulders,1,1]);
+ scaleMesh(at('Head'),b.head);
+ // Avoid moving head geometry off the neck when changing its size.
+ const head=at('Head');if(head)head.pos[1]*=b.head;
+ chosen=at('Rib cage')?.id??chosen;
+ rebuild();$('directorStatus').textContent='Director proposal applied to articulated 3D humanoid. All parts remain editable.';
+ $('hint').textContent='Director design loaded · select a joint or shape to edit';
+ try{localStorage.setItem(DIRECTOR_BRIDGE,JSON.stringify({...proposal,appliedAt:Date.now()}))}catch{}
+}
+$('directorApply').onclick=applyDirector;
+const pendingDirector=new URLSearchParams(location.search).get('director');
+if(pendingDirector==='apply')setTimeout(()=>{applyDirector();history.replaceState(null,'',location.pathname)},100);
+
 // 019: Articulation lives in the joint hierarchy, not the mesh.
 // Mirrored sagittal bends share X rotation; lateral movements invert Y and Z.
 const poseTargets={
