@@ -10,9 +10,10 @@
 <h3>Position (X Y Z)</h3><div class="triple" id="pos"></div><h3>Scale (X Y Z)</h3><div class="triple" id="scale"></div><h3>Rotation (degrees X Y Z)</h3><div class="triple" id="rot"></div></div>
 <h3>Character files</h3><div class="actions"><button id="save">Export JSON</button><button id="load">Import JSON</button><input id="file" type="file" accept=".json,application/json" hidden></div><small>All edits are local to your browser. Three.js loads from a CDN.</small>
 </aside></main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
 <script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
-import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 const $=id=>document.getElementById(id),view=$('view'),scene=new THREE.Scene();scene.background=new THREE.Color('#141a27');
 const camera=new THREE.PerspectiveCamera(45,1,.1,200);camera.position.set(7,5,9);
 const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));view.prepend(renderer.domElement);
