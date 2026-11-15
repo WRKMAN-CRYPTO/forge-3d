@@ -166,7 +166,7 @@ else if(style==='crawler'){
    }
    for(let i=0;i<candidates.length;i++){
     const leg=candidates[i],p=leg.points;
-    for(let k=1;k<4;k++)p[k].add(pushes[i][k]).lerp(rest[i][k],.012); p[k].z=rest[i][k].z;
+    for(let k=1;k<4;k++){p[k].add(pushes[i][k]).lerp(rest[i][k],.012);p[k].z=rest[i][k].z;}
     for(let pass=0;pass<3;pass++){
      for(let k=1;k<4;k++){
       const v=p[k].clone().sub(p[k-1]).normalize();
