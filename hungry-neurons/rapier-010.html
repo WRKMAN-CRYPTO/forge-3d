@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hungry Neurons 010 · Rapier</title><style>
 *{box-sizing:border-box}body{margin:0;background:#0c1525;color:#dce8fa;font:14px system-ui}header{padding:12px 16px;background:#17253c;display:flex;align-items:center;justify-content:space-between;gap:10px}h1{font-size:18px;margin:0}small{color:#a8bdd3}main{display:grid;grid-template-columns:minmax(0,1fr) 320px;min-height:calc(100vh - 52px);min-width:0}#view{height:min(72vh,720px);min-height:300px;position:relative;touch-action:none;min-width:0;overflow:hidden}#view canvas{display:block;width:100%;height:100%}aside{padding:12px;overflow:auto;max-height:calc(100vh - 52px)}.panel{background:#18263c;padding:12px;border-radius:12px;margin-bottom:10px}button{background:#304c6d;border:1px solid #54749c;color:white;padding:9px;border-radius:8px;cursor:pointer}button:disabled{opacity:.5}.controls{display:flex;flex-wrap:wrap;gap:6px}label{display:block;margin-top:12px}input[type=range]{width:100%}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stats div{background:#102035;padding:8px;border-radius:8px}.stats strong{display:block;font-size:20px}#status{color:#8ce3b6}#graph{width:100%;height:110px;background:#0c1728;border-radius:8px}#hud{position:absolute;top:10px;left:10px;pointer-events:none;color:#d9e9ff;background:#091422a9;padding:8px;border-radius:8px}@media(max-width:800px){header{padding:9px 12px}h1{font-size:15px}main{display:block;min-height:0}#view{height:clamp(270px,43svh,440px);min-height:0}aside{max-height:none;padding:10px}#hud{font-size:11px;padding:6px;max-width:72%}}
-</style></head><body><header><h1>🦴 Hungry Neurons 010 · Rapier</h1><small>Independent physics branch · 009 preserved</small></header><main><div id="view"><div id="hud">Whole-body framing · Drag to orbit · Pinch to zoom<br>Real colliders · constrained limbs · no teleport propulsion</div></div><aside><div class="panel"><div id="status">Loading Rapier physics…</div><div class="controls"><button id="pause">⏸ Pause</button><button id="reset">↻ Reset training</button><button id="save">💾 Export brain</button><button id="debug">◉ Contact markers: ON</button><button id="follow">◎ Follow: ON</button><button id="recenter">⌖ Recenter</button></div><label>Simulation speed <span id="speedText">1×</span><input id="speed" type="range" min="1" max="8" value="1"></label><div class="stats"><div>Generation<strong id="gen">0</strong></div><div>Trial<strong id="trial">0 / 25</strong></div><div>Best average<strong id="best">0</strong></div><div>Food collected<strong id="food">0</strong></div><div>Ground contacts<strong id="contacts">0</strong></div><div>Body speed<strong id="bodySpeed">0</strong></div></div></div><div class="panel"><b>Controlled evolution</b><p><small>Five brains (champion + four mutants) each face the same five target positions. Selection uses mean fitness, not a single lucky attempt. A fixed benchmark can overfit, so validation on unseen targets remains necessary.</small></p><svg id="graph" viewBox="0 0 320 110"><path d="M12 8V98H312" stroke="#60758c" fill="none"/><polyline id="curve" fill="none" stroke="#7fe8ad" stroke-width="2.5" points=""/></svg><div id="scores"></div></div><div class="panel"><b>What changed</b><p><small>Rapier rigid bodies for pelvis, chest, head, upper/lower limbs, hands and feet. Spherical joint constraints connect segments. Neural outputs drive bounded torques on the physical segments, not animation rotations. Ground friction and contact response come from Rapier. No artificial forward gait, height correction, or manual horizontal translation.</small></p><p><small>Prototype limitations: spherical joints have no anatomical angle limits yet, and motor torques are simple rather than muscle-like. Physics results and learning have not been browser-verified.</small></p><a style="color:#8cceff" href="./">Return to 009</a></div></aside></main>
+</style></head><body><header><h1>🦴 Hungry Neurons 010 · Rapier</h1><small>Independent physics branch · 009 preserved</small></header><main><div id="view"><div id="hud">Whole-body framing · Drag to orbit · Pinch to zoom<br>Real colliders · constrained limbs · no teleport propulsion</div></div><aside><div class="panel"><div id="status">Loading Rapier physics…</div><div class="controls"><button id="pause">⏸ Pause</button><button id="reset">↻ Reset training</button><button id="save">💾 Export brain</button><button id="debug">◉ Contact markers: ON</button><button id="follow">◎ Follow: ON</button><button id="recenter">⌖ Recenter</button></div><label>Simulation speed <span id="speedText">1×</span><input id="speed" type="range" min="1" max="8" value="1"></label><div class="stats"><div>Generation<strong id="gen">0</strong></div><div>Trial<strong id="trial">0 / 25</strong></div><div>Best average<strong id="best">0</strong></div><div>Food collected<strong id="food">0</strong></div><div>Ground contacts<strong id="contacts">0</strong></div><div>Body speed<strong id="bodySpeed">0</strong></div></div></div><div class="panel"><b>Controlled evolution</b><p><small>Five brains (champion + four mutants) each face the same five target positions. Selection uses mean fitness, not a single lucky attempt. A fixed benchmark can overfit, so validation on unseen targets remains necessary.</small></p><svg id="graph" viewBox="0 0 320 110"><path d="M12 8V98H312" stroke="#60758c" fill="none"/><polyline id="curve" fill="none" stroke="#7fe8ad" stroke-width="2.5" points=""/></svg><div id="scores"></div></div><div class="panel"><b>🍏 Food Switch Test</b><p><small>Freeze the current champion and replay identical physics starts with food left, right, or with food direction hidden from its senses. No training or mutation occurs during testing. Compare displacement toward the target and food reached, not just total movement.</small></p><div class="controls"><button id="switchTest">🧪 Test food awareness</button></div><div id="switchStatus">Ready · current champion will be tested</div><div id="switchResults" style="overflow-x:auto"></div></div><div class="panel"><b>What changed</b><p><small>Rapier rigid bodies for pelvis, chest, head, upper/lower limbs, hands and feet. Spherical joint constraints connect segments. Neural outputs drive bounded torques on the physical segments, not animation rotations. Ground friction and contact response come from Rapier. No artificial forward gait, height correction, or manual horizontal translation.</small></p><p><small>Prototype limitations: spherical joints have no anatomical angle limits yet, and motor torques are simple rather than muscle-like. Physics results and learning have not been browser-verified.</small></p><a style="color:#8cceff" href="./">Return to 009</a></div></aside></main>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
@@ -15,7 +15,7 @@ scene.add(new THREE.GridHelper(100,100,0x45617e,0x2c415b));
 const foodMesh=new THREE.Mesh(new THREE.SphereGeometry(.25,20,16),new THREE.MeshStandardMaterial({color:'#78f3a4',emissive:'#1a6e3c'}));scene.add(foodMesh);
 const markerMat=new THREE.MeshBasicMaterial({color:'#ffd479'}),markers=Array.from({length:2},()=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.105,10,8),markerMat);scene.add(m);return m});
 const colors={pelvis:'#85d7b7',chest:'#78b3f4',head:'#e4bd7b',upperArm:'#a1c6ff',lowerArm:'#a8ddc7',upperLeg:'#f19aa7',lowerLeg:'#baa6f1',foot:'#e6b96d',hand:'#e6b96d'};
-let world,groundCollider,segments=[],bodyByName={},jointLinks=[],paused=false,showDebug=true,gen=0,totalFood=0,champion,best=-Infinity,group=[],idx=0,targetIndex=0,elapsed=0,fitness=0,initialDist=7,hit=false,history=[],active=false;
+let world,groundCollider,segments=[],bodyByName={},jointLinks=[],paused=false,showDebug=true,switchTest=null,gen=0,totalFood=0,champion,best=-Infinity,group=[],idx=0,targetIndex=0,elapsed=0,fitness=0,initialDist=7,hit=false,history=[],active=false;
 const NIN=32,NH=24,NOUT=96,WEIGHTS=(NIN+1)*NH+(NH+1)*NOUT,rand=()=>Math.random()*2-1;
 const targets=Array.from({length:5},(_,i)=>{const a=i*Math.PI*2/5+.32;return {x:Math.sin(a)*7,y:.32,z:Math.cos(a)*7}});
 const parts=[
@@ -76,15 +76,15 @@ function finishTrial(){
 }
 function beginGeneration(){gen++;idx=0;targetIndex=0;group=[{weights:champion.slice(),total:0,hits:0},...Array.from({length:4},()=>({weights:champion.map(w=>w+(Math.random()<.8?rand()*.22:0)),total:0,hits:0}))];startTrial()}
 function step(){
- if(!active)return;const dt=1/60,pelvis=bodyByName.pelvis.rb,pp=pelvis.translation(),pv=pelvis.linvel(),q=pelvis.rotation(),target=targets[targetIndex];
+ if(!active)return;const dt=1/60,pelvis=bodyByName.pelvis.rb,pp=pelvis.translation(),pv=pelvis.linvel(),q=pelvis.rotation(),target=switchTest?switchTest.conditions[switchTest.index]:targets[targetIndex];
  const dx=target.x-pp.x,dz=target.z-pp.z,d=Math.hypot(dx,dz),heading=Math.atan2(2*(q.w*q.y+q.x*q.z),1-2*(q.y*q.y+q.z*q.z)),bearing=Math.atan2(dx,dz)-heading;
  const footL=bodyByName.leftFoot.rb.translation(),footR=bodyByName.rightFoot.rb.translation();
- const values=[Math.sin(bearing),Math.cos(bearing),Math.min(1,d/15),Math.sin(elapsed*3),Math.cos(elapsed*3),pv.x/4,pv.z/4,pv.y/4,q.x,q.y,q.z,q.w,pp.y/5];
+ const values=[switchTest?.blind?0:Math.sin(bearing),switchTest?.blind?0:Math.cos(bearing),switchTest?.blind?0:Math.min(1,d/15),Math.sin(elapsed*3),Math.cos(elapsed*3),pv.x/4,pv.z/4,pv.y/4,q.x,q.y,q.z,q.w,pp.y/5];
  // Read velocities, joint segment orientation, and actual foot heights.
  for(const name of ['leftUpperLeg','rightUpperLeg','leftLowerLeg','rightLowerLeg','chest']){const w=bodyByName[name].rb.angvel();values.push(w.x/5,w.z/5)}
- values.push(footL.y/3,footR.y/3,Math.min(1,d/15),Math.sin(heading),Math.cos(heading),Math.min(1,Math.hypot(pv.x,pv.z)/4),1);
+ values.push(footL.y/3,footR.y/3,switchTest?.blind?0:Math.min(1,d/15),Math.sin(heading),Math.cos(heading),Math.min(1,Math.hypot(pv.x,pv.z)/4),1);
  while(values.length<NIN)values.push(0);
- const output=brain(values.slice(0,NIN),group[idx].weights);
+ const output=brain(values.slice(0,NIN),switchTest?switchTest.weights:group[idx].weights);
  // Torques act on real masses. No manual position, heading or locomotion changes.
  for(let i=1;i<segments.length;i++){const seg=segments[i],parent=bodyByName[seg.parent];const base=((i-1)*3)%NOUT;
   const torque=new THREE.Vector3(output[base],output[base+1],output[base+2]).multiplyScalar(seg.name.includes('Leg')?2.5:seg.name.includes('Foot')?1.1:1.5);
@@ -102,9 +102,45 @@ function step(){
  markers.forEach((m,i)=>{const s=bodyByName[i?'rightFoot':'leftFoot'];const p=s.rb.translation();m.position.set(p.x,.06,p.z);m.visible=showDebug;m.material.color.set(contacts?'#7cff9b':'#ffd479')});
  const newP=pelvis.translation(),newD=Math.hypot(target.x-newP.x,target.z-newP.z);
  fitness+=(d-newD)*14-dt*.03;
+ if(switchTest){
+  const st=switchTest;
+  st.minDistance=Math.min(st.minDistance,newD);
+  if(newD<.7||elapsed>=13||newD>25){
+   st.rows.push({condition:st.conditions[st.index].label,closing:7-newD,closest:st.minDistance,food:newD<.7?1:0,travel:Math.hypot(newP.x,newP.z),x:newP.x,z:newP.z});
+   st.index++;
+   if(st.index===st.conditions.length)endSwitchTest();else startSwitchTrial();
+  }
+  return;
+ }
  if(newD<.7){hit=true;totalFood++;finishTrial();return}
  if(elapsed>=13||newD>25)finishTrial();
 }
+function startSwitchTrial(){
+ const st=switchTest,c=st.conditions[st.index];makeWorld();
+ foodMesh.position.set(c.x,.32,c.z);
+ elapsed=0;fitness=0;hit=false;active=true;st.blind=c.blind;st.minDistance=7;
+ $('switchStatus').textContent='Testing '+c.label+' ('+(st.index+1)+'/6)…';
+}
+function endSwitchTest(){
+ const st=switchTest;
+ $('switchResults').innerHTML='<table style="width:100%;font-size:12px"><tr><th>Condition</th><th>Closing</th><th>Closest</th><th>Food</th></tr>'+st.rows.map(r=>'<tr><td>'+r.condition+'</td><td>'+r.closing.toFixed(2)+'</td><td>'+r.closest.toFixed(2)+'</td><td>'+(r.food?'Yes':'No')+'</td></tr>').join('')+'</table>';
+ const left=st.rows.filter(r=>r.condition==='Left').reduce((a,r)=>a+r.closing,0)/2;
+ const right=st.rows.filter(r=>r.condition==='Right').reduce((a,r)=>a+r.closing,0)/2;
+ const blind=st.rows.filter(r=>r.condition.startsWith('Blind')).reduce((a,r)=>a+r.closing,0)/2;
+ $('switchStatus').textContent='Finished · left '+left.toFixed(2)+' · right '+right.toFixed(2)+' · blind '+blind.toFixed(2)+'. Differences alone do not prove learning; repeat with more seeds.';
+ switchTest=null;startTrial();paused=st.wasPaused;$('pause').textContent=paused?'▶ Resume':'⏸ Pause';$('switchTest').disabled=false;
+}
+$('switchTest').onclick=()=>{
+ if(!active||switchTest)return;
+ const wasPaused=paused;paused=false;$('pause').textContent='⏸ Pause';
+ // Two repeat sets. Starts are identical within each condition.
+ switchTest={weights:champion.slice(),wasPaused,index:0,blind:false,minDistance:7,rows:[],conditions:[
+ {label:'Left',x:-7,z:0,blind:false},{label:'Right',x:7,z:0,blind:false},
+ {label:'Blind left',x:-7,z:0,blind:true},{label:'Blind right',x:7,z:0,blind:true},
+ {label:'Left',x:-7,z:0,blind:false},{label:'Right',x:7,z:0,blind:false}
+ ]};
+ $('switchTest').disabled=true;startSwitchTrial();
+};
 $('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'▶ Resume':'⏸ Pause'};
 $('reset').onclick=()=>{champion=Array.from({length:WEIGHTS},()=>rand()*.6);history=[];best=-Infinity;gen=0;totalFood=0;$('curve').setAttribute('points','');beginGeneration()};
 $('debug').onclick=()=>{showDebug=!showDebug;$('debug').textContent='◉ Contact markers: '+(showDebug?'ON':'OFF')};
