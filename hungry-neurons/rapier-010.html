@@ -1,0 +1,117 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hungry Neurons 010 · Rapier</title><style>
+*{box-sizing:border-box}body{margin:0;background:#0c1525;color:#dce8fa;font:14px system-ui}header{padding:12px 16px;background:#17253c;display:flex;align-items:center;justify-content:space-between;gap:10px}h1{font-size:18px;margin:0}small{color:#a8bdd3}main{display:grid;grid-template-columns:minmax(0,1fr) 320px;min-height:calc(100vh - 52px)}#view{height:calc(100vh - 52px);position:relative;touch-action:none}aside{padding:12px;overflow:auto;max-height:calc(100vh - 52px)}.panel{background:#18263c;padding:12px;border-radius:12px;margin-bottom:10px}button{background:#304c6d;border:1px solid #54749c;color:white;padding:9px;border-radius:8px;cursor:pointer}button:disabled{opacity:.5}.controls{display:flex;flex-wrap:wrap;gap:6px}label{display:block;margin-top:12px}input[type=range]{width:100%}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stats div{background:#102035;padding:8px;border-radius:8px}.stats strong{display:block;font-size:20px}#status{color:#8ce3b6}#graph{width:100%;height:110px;background:#0c1728;border-radius:8px}#hud{position:absolute;top:10px;left:10px;pointer-events:none;color:#d9e9ff;background:#091422a9;padding:8px;border-radius:8px}@media(max-width:800px){main{display:block}#view{height:56vh}aside{max-height:none}}
+</style></head><body><header><h1>🦴 Hungry Neurons 010 · Rapier</h1><small>Independent physics branch · 009 preserved</small></header><main><div id="view"><div id="hud">Drag to orbit · Pinch to zoom<br>Real colliders · constrained limbs · no teleport propulsion</div></div><aside><div class="panel"><div id="status">Loading Rapier physics…</div><div class="controls"><button id="pause">⏸ Pause</button><button id="reset">↻ Reset training</button><button id="save">💾 Export brain</button><button id="debug">◉ Contact markers: ON</button></div><label>Simulation speed <span id="speedText">1×</span><input id="speed" type="range" min="1" max="8" value="1"></label><div class="stats"><div>Generation<strong id="gen">0</strong></div><div>Trial<strong id="trial">0 / 25</strong></div><div>Best average<strong id="best">0</strong></div><div>Food collected<strong id="food">0</strong></div><div>Ground contacts<strong id="contacts">0</strong></div><div>Body speed<strong id="bodySpeed">0</strong></div></div></div><div class="panel"><b>Controlled evolution</b><p><small>Five brains (champion + four mutants) each face the same five target positions. Selection uses mean fitness, not a single lucky attempt. A fixed benchmark can overfit, so validation on unseen targets remains necessary.</small></p><svg id="graph" viewBox="0 0 320 110"><path d="M12 8V98H312" stroke="#60758c" fill="none"/><polyline id="curve" fill="none" stroke="#7fe8ad" stroke-width="2.5" points=""/></svg><div id="scores"></div></div><div class="panel"><b>What changed</b><p><small>Rapier rigid bodies for pelvis, chest, head, upper/lower limbs, hands and feet. Spherical joint constraints connect segments. Neural outputs drive bounded torques on the physical segments, not animation rotations. Ground friction and contact response come from Rapier. No artificial forward gait, height correction, or manual horizontal translation.</small></p><p><small>Prototype limitations: spherical joints have no anatomical angle limits yet, and motor torques are simple rather than muscle-like. Physics results and learning have not been browser-verified.</small></p><a style="color:#8cceff" href="./">Return to 009</a></div></aside></main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.1/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+import RAPIER from 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.20.0/+esm';
+const $=id=>document.getElementById(id),view=$('view'),scene=new THREE.Scene();scene.background=new THREE.Color('#101b2c');
+const camera=new THREE.PerspectiveCamera(50,1,.1,300);camera.position.set(8,6,12);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));view.prepend(renderer.domElement);
+const orbit=new OrbitControls(camera,renderer.domElement);orbit.target.set(0,1.8,0);orbit.enableDamping=true;
+scene.add(new THREE.HemisphereLight(0xeaf4ff,0x33446a,2.2));const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(5,12,6);scene.add(sun);
+const groundMesh=new THREE.Mesh(new THREE.BoxGeometry(100,.15,100),new THREE.MeshStandardMaterial({color:'#21334b'}));groundMesh.position.y=-.075;scene.add(groundMesh);
+scene.add(new THREE.GridHelper(100,100,0x45617e,0x2c415b));
+const foodMesh=new THREE.Mesh(new THREE.SphereGeometry(.25,20,16),new THREE.MeshStandardMaterial({color:'#78f3a4',emissive:'#1a6e3c'}));scene.add(foodMesh);
+const markerMat=new THREE.MeshBasicMaterial({color:'#ffd479'}),markers=Array.from({length:2},()=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.105,10,8),markerMat);scene.add(m);return m});
+const colors={pelvis:'#85d7b7',chest:'#78b3f4',head:'#e4bd7b',upperArm:'#a1c6ff',lowerArm:'#a8ddc7',upperLeg:'#f19aa7',lowerLeg:'#baa6f1',foot:'#e6b96d',hand:'#e6b96d'};
+let world,groundCollider,segments=[],bodyByName={},jointLinks=[],paused=false,showDebug=true,gen=0,totalFood=0,champion,best=-Infinity,group=[],idx=0,targetIndex=0,elapsed=0,fitness=0,initialDist=7,hit=false,history=[],active=false;
+const NIN=32,NH=24,NOUT=96,WEIGHTS=(NIN+1)*NH+(NH+1)*NOUT,rand=()=>Math.random()*2-1;
+const targets=Array.from({length:5},(_,i)=>{const a=i*Math.PI*2/5+.32;return {x:Math.sin(a)*7,y:.32,z:Math.cos(a)*7}});
+const parts=[
+['pelvis',null,[0,2.85,0],[.42,.27,.32],2.8],
+['chest','pelvis',[0,3.53,0],[.68,.62,.4],4.0],
+['head','chest',[0,4.32,0],[.32,.36,.3],1.1],
+['leftUpperArm','chest',[-.94,3.45,0],[.19,.45,.2],.7],
+['leftLowerArm','leftUpperArm',[-1.03,2.6,0],[.16,.42,.16],.5],
+['leftHand','leftLowerArm',[-1.03,2.12,0],[.17,.14,.16],.2],
+['rightUpperArm','chest',[.94,3.45,0],[.19,.45,.2],.7],
+['rightLowerArm','rightUpperArm',[1.03,2.6,0],[.16,.42,.16],.5],
+['rightHand','rightLowerArm',[1.03,2.12,0],[.17,.14,.16],.2],
+['leftUpperLeg','pelvis',[-.3,2.07,0],[.23,.65,.23],1.4],
+['leftLowerLeg','leftUpperLeg',[-.3,.93,0],[.18,.55,.18],.9],
+['leftFoot','leftLowerLeg',[-.3,.24,.2],[.23,.14,.4],.4],
+['rightUpperLeg','pelvis',[.3,2.07,0],[.23,.65,.23],1.4],
+['rightLowerLeg','rightUpperLeg',[.3,.93,0],[.18,.55,.18],.9],
+['rightFoot','rightLowerLeg',[.3,.24,.2],[.23,.14,.4],.4]
+];
+function brain(input,weights){let k=0;const hidden=[];for(let i=0;i<NH;i++){let v=weights[k++];for(let j=0;j<NIN;j++)v+=input[j]*weights[k++];hidden.push(Math.tanh(v))}const out=[];for(let i=0;i<NOUT;i++){let v=weights[k++];for(let j=0;j<NH;j++)v+=hidden[j]*weights[k++];out.push(Math.tanh(v))}return out}
+function makeWorld(){
+ if(world)world.free();world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=1/60;
+ groundCollider=world.createCollider(RAPIER.ColliderDesc.cuboid(50,.075,50).setTranslation(0,-.075,0).setFriction(.85));
+ for(const s of segments)scene.remove(s.mesh);segments=[];bodyByName={};jointLinks=[];
+ for(const [name,parent,p,size,mass] of parts){
+  const rb=world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(...p).setLinearDamping(.3).setAngularDamping(1.4));
+  const col=world.createCollider(RAPIER.ColliderDesc.cuboid(...size).setDensity(mass/(8*size[0]*size[1]*size[2])).setFriction(.9).setRestitution(0),rb);
+  const kind=name==='pelvis'?'pelvis':name==='chest'?'chest':name==='head'?'head':name.includes('UpperArm')?'upperArm':name.includes('LowerArm')?'lowerArm':name.includes('UpperLeg')?'upperLeg':name.includes('LowerLeg')?'lowerLeg':name.includes('Foot')?'foot':'hand';
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(size[0]*2,size[1]*2,size[2]*2),new THREE.MeshStandardMaterial({color:colors[kind],roughness:.7}));scene.add(mesh);
+  const seg={name,parent,p,size,rb,col,mesh};segments.push(seg);bodyByName[name]=seg;
+ }
+ for(const s of segments)if(s.parent){
+  const parent=bodyByName[s.parent],a=new THREE.Vector3(...parent.p),b=new THREE.Vector3(...s.p),mid=a.clone().add(b).multiplyScalar(.5);
+  const anchor1={x:mid.x-a.x,y:mid.y-a.y,z:mid.z-a.z},anchor2={x:mid.x-b.x,y:mid.y-b.y,z:mid.z-b.z};
+  const joint=world.createImpulseJoint(RAPIER.JointData.spherical(anchor1,anchor2),parent.rb,s.rb,true);jointLinks.push(joint);
+ }
+}
+function sync(){for(const s of segments){const p=s.rb.translation(),q=s.rb.rotation();s.mesh.position.set(p.x,p.y,p.z);s.mesh.quaternion.set(q.x,q.y,q.z,q.w)}}
+function startTrial(){
+ makeWorld();const target=targets[targetIndex];foodMesh.position.set(target.x,target.y,target.z);
+ elapsed=0;fitness=0;hit=false;initialDist=7;active=true;
+ $('trial').textContent=(idx*5+targetIndex+1)+' / 25';$('gen').textContent=gen;
+ $('status').textContent='Generation '+gen+' · '+(idx===0?'Champion':'Mutant '+idx)+' · target '+(targetIndex+1);
+}
+function finishTrial(){
+ const score=fitness+(hit?35:0);
+ group[idx].total+=score;group[idx].hits+=hit?1:0;targetIndex++;
+ if(targetIndex===5){targetIndex=0;idx++}
+ if(idx===5){
+  const averages=group.map(g=>g.total/5),winner=averages.indexOf(Math.max(...averages));
+  champion=group[winner].weights.slice();best=averages[winner];history.push(best);
+  $('best').textContent=best.toFixed(2);$('food').textContent=totalFood;
+  $('scores').textContent='Champion '+averages[0].toFixed(2)+' | mutants '+averages.slice(1).map(v=>v.toFixed(2)).join(' / ')+' | winner '+(winner||'champion');
+  const h=history.slice(-90),lo=Math.min(...h)-1,hi=Math.max(...h)+1;
+  $('curve').setAttribute('points',h.map((v,i)=>(12+i*300/Math.max(1,h.length-1)).toFixed(1)+','+(98-(v-lo)/(hi-lo)*86).toFixed(1)).join(' '));
+  beginGeneration();
+ }else startTrial();
+}
+function beginGeneration(){gen++;idx=0;targetIndex=0;group=[{weights:champion.slice(),total:0,hits:0},...Array.from({length:4},()=>({weights:champion.map(w=>w+(Math.random()<.8?rand()*.22:0)),total:0,hits:0}))];startTrial()}
+function step(){
+ if(!active)return;const dt=1/60,pelvis=bodyByName.pelvis.rb,pp=pelvis.translation(),pv=pelvis.linvel(),q=pelvis.rotation(),target=targets[targetIndex];
+ const dx=target.x-pp.x,dz=target.z-pp.z,d=Math.hypot(dx,dz),heading=Math.atan2(2*(q.w*q.y+q.x*q.z),1-2*(q.y*q.y+q.z*q.z)),bearing=Math.atan2(dx,dz)-heading;
+ const footL=bodyByName.leftFoot.rb.translation(),footR=bodyByName.rightFoot.rb.translation();
+ const values=[Math.sin(bearing),Math.cos(bearing),Math.min(1,d/15),Math.sin(elapsed*3),Math.cos(elapsed*3),pv.x/4,pv.z/4,pv.y/4,q.x,q.y,q.z,q.w,pp.y/5,
+ ...[...bodyByName.leftUpperLeg.rb.angvel(),...bodyByName.rightUpperLeg.rb.angvel()].slice(0,0)];
+ // Read velocities, joint segment orientation, and actual foot heights.
+ for(const name of ['leftUpperLeg','rightUpperLeg','leftLowerLeg','rightLowerLeg','chest']){const w=bodyByName[name].rb.angvel();values.push(w.x/5,w.z/5)}
+ values.push(footL.y/3,footR.y/3,Math.min(1,d/15),Math.sin(heading),Math.cos(heading),Math.min(1,Math.hypot(pv.x,pv.z)/4),1);
+ while(values.length<NIN)values.push(0);
+ const output=brain(values.slice(0,NIN),group[idx].weights);
+ // Torques act on real masses. No manual position, heading or locomotion changes.
+ for(let i=1;i<segments.length;i++){const seg=segments[i],parent=bodyByName[seg.parent];const base=((i-1)*3)%NOUT;
+  const torque=new THREE.Vector3(output[base],output[base+1],output[base+2]).multiplyScalar(seg.name.includes('Leg')?2.5:seg.name.includes('Foot')?1.1:1.5);
+  const av=seg.rb.angvel(),pv2=parent.rb.angvel();
+  torque.x=Math.max(-4,Math.min(4,torque.x-(av.x-pv2.x)*.2));
+  torque.y=Math.max(-4,Math.min(4,torque.y-(av.y-pv2.y)*.2));
+  torque.z=Math.max(-4,Math.min(4,torque.z-(av.z-pv2.z)*.2));
+  seg.rb.addTorque({x:torque.x,y:torque.y,z:torque.z},true);
+  parent.rb.addTorque({x:-torque.x,y:-torque.y,z:-torque.z},true);
+ }
+ world.step();sync();elapsed+=dt;
+ let contacts=0;
+ for(const name of ['leftFoot','rightFoot']){const s=bodyByName[name];const pos=s.rb.translation();let touch=false;world.contactPair(s.col,groundCollider,()=>{touch=true});if(touch)contacts++}
+ $('contacts').textContent=contacts;$('bodySpeed').textContent=Math.hypot(pelvis.linvel().x,pelvis.linvel().z).toFixed(2);
+ markers.forEach((m,i)=>{const s=bodyByName[i?'rightFoot':'leftFoot'];const p=s.rb.translation();m.position.set(p.x,.06,p.z);m.visible=showDebug;m.material.color.set(contacts?'#7cff9b':'#ffd479')});
+ const newP=pelvis.translation(),newD=Math.hypot(target.x-newP.x,target.z-newP.z);
+ fitness+=(d-newD)*14-dt*.03;
+ if(newD<.7){hit=true;totalFood++;finishTrial();return}
+ if(elapsed>=13||newD>25)finishTrial();
+}
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'▶ Resume':'⏸ Pause'};
+$('reset').onclick=()=>{champion=Array.from({length:WEIGHTS},()=>rand()*.6);history=[];best=-Infinity;gen=0;totalFood=0;$('curve').setAttribute('points','');beginGeneration()};
+$('debug').onclick=()=>{showDebug=!showDebug;$('debug').textContent='◉ Contact markers: '+(showDebug?'ON':'OFF')};
+$('speed').oninput=e=>$('speedText').textContent=e.target.value+'×';
+$('save').onclick=()=>{const blob=new Blob([JSON.stringify({version:10,engine:'rapier',inputs:NIN,hidden:NH,outputs:NOUT,weights:champion,generation:gen,history},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hungry-neurons-rapier-010.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}window.addEventListener('resize',resize);resize();
+function frame(){requestAnimationFrame(frame);if(!paused&&active)for(let i=0;i<Number($('speed').value);i++)step();orbit.update();renderer.render(scene,camera)}frame();
+try{await RAPIER.init();champion=Array.from({length:WEIGHTS},()=>rand()*.6);beginGeneration()}catch(e){$('status').textContent='Rapier failed to initialize: '+e.message;console.error(e)}
+</script></body></html>
