@@ -127,13 +127,13 @@ function endSwitchTest(){
  const left=st.rows.filter(r=>r.condition==='Left').reduce((a,r)=>a+r.closing,0)/2;
  const right=st.rows.filter(r=>r.condition==='Right').reduce((a,r)=>a+r.closing,0)/2;
  const blind=st.rows.filter(r=>r.condition.startsWith('Blind')).reduce((a,r)=>a+r.closing,0)/2;
- $('switchStatus').textContent='Finished · left '+left.toFixed(2)+' · right '+right.toFixed(2)+' · blind '+blind.toFixed(2)+'. Differences alone do not prove learning; repeat with more seeds.';
+ $('switchStatus').textContent='Finished · left '+left.toFixed(2)+' · right '+right.toFixed(2)+' · blind '+blind.toFixed(2)+'. This is a preliminary comparison: duplicate trials have identical starts, not independent random seeds.';
  switchTest=null;startTrial();paused=st.wasPaused;$('pause').textContent=paused?'▶ Resume':'⏸ Pause';$('switchTest').disabled=false;
 }
 $('switchTest').onclick=()=>{
  if(!active||switchTest)return;
  const wasPaused=paused;paused=false;$('pause').textContent='⏸ Pause';
- // Two repeat sets. Starts are identical within each condition.
+ // Duplicate trials use identical starts, not independent seeds.
  switchTest={weights:champion.slice(),wasPaused,index:0,blind:false,minDistance:7,rows:[],conditions:[
  {label:'Left',x:-7,z:0,blind:false},{label:'Right',x:7,z:0,blind:false},
  {label:'Blind left',x:-7,z:0,blind:true},{label:'Blind right',x:7,z:0,blind:true},
