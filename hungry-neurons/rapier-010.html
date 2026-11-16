@@ -79,8 +79,7 @@ function step(){
  if(!active)return;const dt=1/60,pelvis=bodyByName.pelvis.rb,pp=pelvis.translation(),pv=pelvis.linvel(),q=pelvis.rotation(),target=targets[targetIndex];
  const dx=target.x-pp.x,dz=target.z-pp.z,d=Math.hypot(dx,dz),heading=Math.atan2(2*(q.w*q.y+q.x*q.z),1-2*(q.y*q.y+q.z*q.z)),bearing=Math.atan2(dx,dz)-heading;
  const footL=bodyByName.leftFoot.rb.translation(),footR=bodyByName.rightFoot.rb.translation();
- const values=[Math.sin(bearing),Math.cos(bearing),Math.min(1,d/15),Math.sin(elapsed*3),Math.cos(elapsed*3),pv.x/4,pv.z/4,pv.y/4,q.x,q.y,q.z,q.w,pp.y/5,
- ...[...bodyByName.leftUpperLeg.rb.angvel(),...bodyByName.rightUpperLeg.rb.angvel()].slice(0,0)];
+ const values=[Math.sin(bearing),Math.cos(bearing),Math.min(1,d/15),Math.sin(elapsed*3),Math.cos(elapsed*3),pv.x/4,pv.z/4,pv.y/4,q.x,q.y,q.z,q.w,pp.y/5];
  // Read velocities, joint segment orientation, and actual foot heights.
  for(const name of ['leftUpperLeg','rightUpperLeg','leftLowerLeg','rightLowerLeg','chest']){const w=bodyByName[name].rb.angvel();values.push(w.x/5,w.z/5)}
  values.push(footL.y/3,footR.y/3,Math.min(1,d/15),Math.sin(heading),Math.cos(heading),Math.min(1,Math.hypot(pv.x,pv.z)/4),1);
