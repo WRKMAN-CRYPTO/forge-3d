@@ -113,33 +113,34 @@ $('save').onclick=()=>{const blob=new Blob([JSON.stringify({version:10,engine:'r
 function resize(){const w=Math.max(1,view.clientWidth),h=Math.max(1,view.clientHeight);renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?58:48;camera.updateProjectionMatrix()}window.addEventListener('resize',resize);resize();
 function trackCamera(force=false){
  if(!segments.length)return;
- // Frame the whole articulated body, not one violently moving joint.
+ // Use exact rigid-body bounds and center in WORLD coordinates.
  const bounds=new THREE.Box3();
- for(const s of segments){
-  const p=s.rb.translation(),half=Math.max(...s.size);
-  bounds.expandByPoint(new THREE.Vector3(p.x-half,p.y-half,p.z-half));
-  bounds.expandByPoint(new THREE.Vector3(p.x+half,p.y+half,p.z+half));
+ for(const seg of segments){
+  const p=seg.rb.translation();
+  const q=seg.rb.rotation();
+  const rot=new THREE.Quaternion(q.x,q.y,q.z,q.w);
+  const half=new THREE.Vector3(...seg.size);
+  const matrix=new THREE.Matrix4().compose(new THREE.Vector3(p.x,p.y,p.z),rot,new THREE.Vector3(1,1,1));
+  const local=new THREE.Box3(half.clone().negate(),half);
+  bounds.union(local.applyMatrix4(matrix));
  }
  const center=bounds.getCenter(new THREE.Vector3());
- const size=bounds.getSize(new THREE.Vector3());
- const target=center.clone();
- const alpha=force?1:.09;
- followPoint.lerp(target,alpha);
- const delta=followPoint.clone().sub(orbit.target);
- camera.position.add(delta);
- orbit.target.copy(followPoint);
- // Preserve user orbit direction, only adjust distance when the body needs more room.
- const aspect=Math.max(.35,camera.aspect);
- const verticalFov=THREE.MathUtils.degToRad(camera.fov);
- const horizontalFov=2*Math.atan(Math.tan(verticalFov/2)*aspect);
- const radius=Math.max(2.4,size.length()*.55);
- const required=Math.max(radius/Math.sin(verticalFov/2),radius/Math.sin(horizontalFov/2))*1.15;
+ const extent=bounds.getSize(new THREE.Vector3());
+ // Camera must translate with its target, with no lag or pivot mismatch.
  const offset=camera.position.clone().sub(orbit.target);
+ orbit.target.copy(center);
+ followPoint.copy(center);
+ const vFov=THREE.MathUtils.degToRad(camera.fov);
+ const hFov=2*Math.atan(Math.tan(vFov/2)*camera.aspect);
+ const radius=extent.length()*.5+.45;
+ const needed=Math.max(radius/Math.sin(vFov*.5),radius/Math.sin(hFov*.5))*1.15;
+ const distance=Math.max(5.5,Math.min(65,needed));
+ // Always fit immediately when zooming out; zoom in slowly to prevent pumping.
  const current=offset.length();
- const desiredDistance=THREE.MathUtils.clamp(required,7,45);
- const distance=THREE.MathUtils.lerp(current,desiredDistance,force?1:.035);
- if(current>.001)camera.position.copy(orbit.target).addScaledVector(offset, distance/current);
- orbit.maxDistance=65;
+ const next=force||distance>current?distance:THREE.MathUtils.lerp(current,distance,.035);
+ if(current>.001)camera.position.copy(center).addScaledVector(offset,next/current);
+ else camera.position.copy(center).add(new THREE.Vector3(0,3,next));
+ orbit.maxDistance=90;
 }
 $('follow').onclick=()=>{followCamera=!followCamera;$('follow').textContent='◎ Follow: '+(followCamera?'ON':'OFF');if(followCamera)trackCamera(true)};
 $('recenter').onclick=()=>{followCamera=true;$('follow').textContent='◎ Follow: ON';camera.position.set(8,6,12);orbit.target.set(0,1.8,0);followPoint.copy(orbit.target);trackCamera(true);orbit.update()};
